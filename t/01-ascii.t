@@ -4,7 +4,7 @@
 
 # turn off info for test
 use Log::Log4perl qw(:easy);
-Log::Log4perl->easy_init( $WARN );
+Log::Log4perl->easy_init( $DEBUG );
 use File::Temp;
 
 use MeSH::Parser::ASCII;

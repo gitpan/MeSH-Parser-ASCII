@@ -102,6 +102,7 @@ sub parse() {
 			$id       = undef;
 		}
 
+		DEBUG '<' . $_ . '>';
 		# save on new line
 		if (/^$/) {
 			LOGDIE 'Something went wrong. Could not parse heading\'s label.'
