@@ -76,7 +76,7 @@ use Moose 0.89;
 use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init( { level => $INFO, layout => '%-5p - %m%n' } );
 
-our $VERSION = 0.01;
+our $VERSION = 0.02;
 
 has 'meshfile' => ( is => 'rw', isa => 'Str', required => 1 );
 has 'heading' => ( is => 'ro', isa => 'HashRef', default => sub { {} } );
@@ -94,7 +94,8 @@ sub parse() {
 
 	while (<$fh>) {
 		# multiplatform chomp
-		s/\015?\012?$//;
+		# this will also rtrim the line
+		s/\s+$//;
 
 		# initialise
 		if (/^\*NEWRECORD/) {
