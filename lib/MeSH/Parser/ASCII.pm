@@ -93,7 +93,8 @@ sub parse() {
 	$count->{syns} = 0;
 
 	while (<$fh>) {
-		chomp;
+		# multiplatform chomp
+		s/\015?\012?$//;
 
 		# initialise
 		if (/^\*NEWRECORD/) {
@@ -103,9 +104,10 @@ sub parse() {
 		}
 
 		DEBUG '<' . $_ . '>';
+
 		# save on new line
 		if (/^$/) {
-			LOGDIE 'Something went wrong. Could not parse heading\'s label.'
+			LOGDIE 'Could not parse heading\'s label.'
 			  unless defined $label;
 			$count->{headings}++;
 			WARN "Duplicate heading found for $id"
@@ -141,13 +143,16 @@ sub parse() {
 	}
 	close $fh;
 
+	LOGDIE 'Could not parse any headings.'
+	  unless defined $count->{headings};
+
 	INFO "Loaded "
 	  . $count->{headings}
 	  . " headings and "
 	  . $count->{syns}
 	  . " synonyms";
-	  
-	  1;
+
+	1;
 }
 
 1;
