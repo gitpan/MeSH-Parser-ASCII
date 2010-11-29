@@ -15,10 +15,17 @@ MeSH::Parser::ASCII - parser for the MeSH ASCII format
 	$parser->parse();
 	
 	# loop through all the headings
-	while (my ($id, $heading)  = each %{$parser->heading} ){
+	while ( my ( $id, $heading ) = each %{ $parser->heading } ) {
 		print $id . ' - ' . $heading->{label} . "\n";
-		for my $synonym (@{$heading->{synonyms}}){
+		
+		# list synonyms
+		for my $synonym ( @{ $heading->{synonyms} } ) {
 			print "\t$synonym\n";
+		}
+		
+		# list parents
+		for my $parent ( @{ $heading->{parents} } ) {
+			print "\t" . $parent->{label} . "\n";
 		}
 	}
 
@@ -76,7 +83,7 @@ use Moose 0.89;
 use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init( { level => $INFO, layout => '%-5p - %m%n' } );
 
-our $VERSION = 0.02;
+our $VERSION = 0.03;
 
 has 'meshfile' => ( is => 'rw', isa => 'Str', required => 1 );
 has 'heading' => ( is => 'ro', isa => 'HashRef', default => sub { {} } );
@@ -89,10 +96,11 @@ sub parse() {
 	# open file
 	open my $fh, '<', $self->meshfile;
 
-	my ( $label, $id, $synonyms, $count );
+	my ( $label, $id, $synonyms, $treeNos, $count );
 	$count->{syns} = 0;
 
 	while (<$fh>) {
+
 		# multiplatform chomp
 		# this will also rtrim the line
 		s/\s+$//;
@@ -102,6 +110,7 @@ sub parse() {
 			$synonyms = undef;
 			$label    = undef;
 			$id       = undef;
+			$treeNos  = undef;
 		}
 
 		DEBUG '<' . $_ . '>';
@@ -121,6 +130,8 @@ sub parse() {
 				DEBUG "\t" . $syn;
 				$count->{syns}++;
 			}
+			$self->heading->{$id}->{treeNos} = $treeNos
+			  if defined $treeNos;
 		}
 
 		# Mesh Heading in Descriptor Data Elements
@@ -141,6 +152,8 @@ sub parse() {
 		push @$synonyms, ( split( /\|/, ( split(/ = /) )[1] ) )[0]
 		  if /^PRINT ENTRY = /;
 
+		# MeSH Tree Number
+		push @$treeNos, ( split(/ = /) )[1] if /^MN = /;
 	}
 	close $fh;
 
@@ -152,6 +165,34 @@ sub parse() {
 	  . " headings and "
 	  . $count->{syns}
 	  . " synonyms";
+
+	INFO "Processing hierarchy if available";
+
+	# construct tree
+	my $tree;
+	while ( my ( $id, $heading ) = each %{ $self->heading } ) {
+		DEBUG "No tree number in $id"
+		  unless defined $heading->{treeNos};
+		for my $n ( @{ $heading->{treeNos} } ) {
+			$tree->{$n} = $heading;
+		}
+	}
+
+	# feed back results
+	while ( my ( $id, $heading ) = each %{ $self->heading } ) {
+		for my $n ( @{ $heading->{treeNos} } ) {
+			$n =~ /^(.*)\..*$/;
+			if ( defined $1 ) {
+				my $parent = $tree->{$1};
+				if ( defined $parent ) {
+					push @{ $heading->{parents} }, $parent;
+				}
+				else {
+					WARN "No parent with tree number $n";
+				}
+			}
+		}
+	}
 
 	1;
 }

@@ -1,17 +1,16 @@
 #!perl
 
-#use lib '../lib';
+use lib '../lib';
 
 # turn off info for test
 use Log::Log4perl qw(:easy);
-Log::Log4perl->easy_init( $WARN );
+Log::Log4perl->easy_init( $ERROR );
+
 use File::Temp;
-
 use MeSH::Parser::ASCII;
+use Test::More tests => 7;
 
-use Test::More tests => 6;
-
-# create temp file form _DATA_ to get a proper filename
+# create temp file from _DATA_ to get a proper filename
 my $fh = File::Temp->new;
 $fh->printflush(
 	do { local $/; <DATA> }
@@ -19,29 +18,29 @@ $fh->printflush(
 
 # instantiate the parser
 my $parser = MeSH::Parser::ASCII->new( meshfile => $fh->filename );
-ok($parser, 'Instantiated the parser');
+#my $parser = MeSH::Parser::ASCII->new( meshfile => 'd2010.bin' );
+ok( $parser, 'Instantiated the parser' );
 
 # parse the file
-ok($parser->parse(), 'Parsed the file');
+ok( $parser->parse(), 'Parsed the file' );
 
 my $heading = $parser->heading->{'D000001'};
-ok (defined $heading,'Heading found');
-ok (defined $heading->{label},'Has label');
-ok (defined $heading->{synonyms},'Has synonyms');
+ok( defined $heading,             'Heading found' );
+ok( defined $heading->{label},    'Has label' );
+ok( defined $heading->{synonyms}, 'Has synonyms' );
+ok( defined $heading->{parents}, 'Has parents' );
 
 # test the code from synopsis
-
-	while (my ($id, $heading)  = each %{$parser->heading} ){
-		print $id . ' - ' . $heading->{label} . "\n";
-		for my $synonym (@{$heading->{synonyms}}){
-			print "\t$synonym\n";
-		}
+while ( my ( $id, $heading ) = each %{ $parser->heading } ) {
+	print $id . ' - ' . $heading->{label} . "\n";
+	for my $synonym ( @{ $heading->{synonyms} } ) {
+		print "\t$synonym\n";
 	}
+	for my $parent ( @{ $heading->{parents} } ) {
+		print "\t" . $parent->{label} . "\n";
+	}
+}
 pass('SYNOPSIS');
-
-
-
-
 
 __DATA__
 *NEWRECORD
@@ -86,4 +85,35 @@ DA = 19741119
 DC = 1
 DX = 19840101
 UI = D000001
+
+*NEWRECORD
+RECTYPE = D
+MH = Benzoxazoles
+AQ = AD AE AG AI AN BL CF CH CL CS CT DU EC HI IM IP ME PD PK PO RE SD ST TO TU UR
+MN = D03.438.221
+MH_TH = NLM (1966)
+ST = T109
+RN = 0
+AN = includes benzoxazolines, benzoxazolidines
+PM = 66
+HN = 66
+MED = *36
+MED = 53
+M90 = *52
+M90 = 64
+M85 = *64
+M85 = 70
+M80 = *79
+M80 = 94
+M75 = *57
+M75 = 65
+M66 = *76
+M66 = 115
+M94 = *55
+M94 = 87
+MR = 19920508
+DA = 19990101
+DC = 1
+DX = 19660101
+UI = D001583
 

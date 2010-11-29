@@ -16,10 +16,10 @@ name: MeSH-Parser-ASCII
 provides:
   MeSH::Parser::ASCII:
     file: lib/MeSH/Parser/ASCII.pm
-    version: 0.02
+    version: 0.03
 requires:
   Log::Log4perl: 0
   Moose: 0.89
 resources:
   license: http://www.gnu.org/licenses/old-licenses/gpl-1.0.txt
-version: 0.02
+version: 0.03
